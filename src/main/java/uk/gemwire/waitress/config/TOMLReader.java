@@ -12,17 +12,22 @@ import java.util.StringTokenizer;
  * Intended to only be able to read the file that is output by Waitress.
  * As such, it treats duplicate keys as invalid.
  *
+ * All initializations of StringTokeniser in this class specify a range of delimiters.
+ * The default delimiters are " \t\n\r\f", but this poses a problem when parsing comments, so newlines are preserved.
+ *
  * @author Curle
  */
 public final class TOMLReader {
 
-    private StringTokenizer tokens;
+    private static StringTokenizer tokens;
 
-    public TOMLReader(String text) {
-        tokens = new StringTokenizer(text);
+    public static HashMap<String,String> read(String text) {
+        tokens = new StringTokenizer(text, " \t\r\f");
+        Parser parser = new Parser();
+        return parser.parse();
     }
 
-    public TOMLReader(Reader reader) throws IOException {
+    public static HashMap<String,String> read(Reader reader) throws IOException {
         char[] arr = new char[8 * 1024];
         StringBuilder buffer = new StringBuilder();
         int numCharsRead;
@@ -31,20 +36,16 @@ public final class TOMLReader {
         }
         reader.close();
 
-        tokens = new StringTokenizer(buffer.toString());
-    }
-
-    public HashMap<String, String> parse() {
+        tokens = new StringTokenizer(buffer.toString(), " \t\r\f");
         Parser parser = new Parser();
         return parser.parse();
     }
-
 
     /**
      * Turn the given file into a {@link java.util.HashMap} of {@link String},{@link String}.
      * Categories are ignored. Duplicate keys return an error.
      */
-    class Parser {
+    static class Parser {
         private HashMap<String, String> internalMap = new HashMap<>();
 
         /**
@@ -62,30 +63,53 @@ public final class TOMLReader {
         public HashMap<String,String> parse() throws IllegalStateException {
             while(tokens.hasMoreTokens()) {
 
-                // Store a token. TOML allows for key-value pairs to be in the forms:
-                //  key=value
-                //  key =value
-                //  key = value
-                // Due to the nature of tokenisation, this means that it can take one to three tokens to parse this.
-
                 String token = tokens.nextToken();
+
+
+                // # Comments should be skipped entirely.
+                if(token.contains("#")) {
+                    do {
+                        if(tokens.hasMoreTokens())
+                            token = tokens.nextToken();
+                        else
+                            // Gracefully handle a comment at the end of a file
+                            return internalMap;
+                    } while (! (token.contains("\n")));
+                }
+
+                token = token.strip();
+                if(token.length() < 1) continue;
+
+                // Categories ([[ these ]]) are skipped in parsing.
 
                 if(token.startsWith("[[") && token.endsWith("]]"))
                     // We're dealing with a category
                     continue;
 
-                int counter = 0;
+                // TOML allows for key-value pairs to be in the forms:
+                //  key=value
+                //  key =value
+                //  key = value
+                // Due to the nature of tokenisation, this means that it can take one to three tokens to parse this.
+
+                int counter = 2;
                 // The next section may be repeated up to twice, so it is wrapped in a while loop, with a limiter of two.
-                while(!(token.contains("=")) && counter < 2) {
+                while(counter > 0) {
                     // Construct a full token.
                     if (tokens.hasMoreTokens()) {
                         // Get the new token and check it.
                         final String tempToken = tokens.nextToken();
-                        // If it is length one, then we need another token, as we only have the =
-                        if(tempToken.length() == 1) counter--;
+                        // TODO: cleanup
+                        if (tempToken.contains("="))
+                            // If we just have a = on its own, then we need one more pass.
+                            if(tempToken.length() == 1)
+                                counter = 1;
+                            // If we have more than a = then it's right aligned, so stop passing over it
+                            if(tempToken.length() > 1)
+                                counter = 0;
+
                         // Join the next token with the one we already have.
                         token = new StringJoiner(" ").add(token).add(tempToken).toString();
-                        counter++;
                     } else {
                         throw new IllegalStateException("Unable to fully parse a key-value pair.");
                     }

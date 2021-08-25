@@ -1,5 +1,10 @@
 package uk.gemwire.waitress;
 
+import uk.gemwire.waitress.config.TOMLReader;
+
+import java.io.FileReader;
+import java.util.HashMap;
+
 /**
  * Entry point to the Waitress repository manager.
  *
@@ -53,7 +58,19 @@ public class Waitress {
      * @param argument the command line argument to parse.
      */
     private static void setup(String argument) {
-        // TODO: setup
+        // Get the directory from the argument
+        String[] parts = argument.split("=");
+        if(parts.length != 2) {
+            System.err.println("The cfg argument requires a =PATH_TO_FILE appended.");
+            return;
+        }
+
+        try {
+            HashMap<String, String> map = TOMLReader.read(new FileReader(parts[1]));
+            System.out.println(map);
+        } catch (Exception ignored) {}
+
+        System.exit(0);
     }
 
     /**

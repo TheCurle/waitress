@@ -1,0 +1,18 @@
+[[bootstrap]]
+# The username and password of the root account.
+username = "test"
+password = "00000001"
+
+[[data]]
+
+# Where all the data is stored.
+data_dir = "/data"
+# Should we proxy a repository?
+proxy = true
+# List the repositories to proxy.
+proxy_repo = "https://maven.gemwire.uk/"
+
+[[endpoint]]
+
+# https://<SITE_DOMAIN>/<PANEL> to get to the administrative panel.
+panel = "/admin"
