@@ -10,5 +10,5 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
+    implementation 'io.javalin:javalin:3.13.11'
 }
