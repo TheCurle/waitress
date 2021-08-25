@@ -15,9 +15,9 @@ import java.util.HashMap;
  *
  *
  * Temporary to-do list for the whole project:
- * - Configuration reading
- * - Password management
+ * - ~~Configuration reading~~
  * - Web serving
+ * - Password management
  * - Repository reading
  * - Permission management
  * - Upload
