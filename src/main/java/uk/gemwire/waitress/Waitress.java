@@ -8,6 +8,17 @@ package uk.gemwire.waitress;
  *      Loads the maven data folder.
  *      Indexes the maven groups + projects that are stored locally.
  *
+ *
+ * Temporary to-do list for the whole project:
+ * - Configuration reading
+ * - Password management
+ * - Web serving
+ * - Repository reading
+ * - Permission management
+ * - Upload
+ * - Download
+ * - Management Pages
+ *
  * @author Curle
  */
 public class Waitress {
@@ -20,7 +31,6 @@ public class Waitress {
      *
      * Intentionally left as basic as possible.
      *
-     * @param args
      */
     public static void main(String[] args) {
         for(String arg : args) {
@@ -48,6 +58,8 @@ public class Waitress {
 
     /**
      * Hash the password in the given folder, and write it in-place.
+     *
+     * The hashing algorithm used is PBKDF2WithHmacSHA1, provided by javax.crypto.
      *
      * The argument is expected to be in the form <code>hash-password=FILE_LOCATION</code>.
      * @param argument the command line argument to parse.

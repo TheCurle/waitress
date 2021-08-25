@@ -4,7 +4,8 @@ Waitress is a Java-only web server designed for use with Maven repositories.
 
 It serves Maven repos, hence the name.
 
-##Overview
+## Overview
+
 Waitress essentially works with a single lightweight web server, and some backend services.  
 
 When a GET request is made for a file, the following process is run.
@@ -36,6 +37,7 @@ Here is the process for a PUT request.
 
 
 ### Authentication
+
 Waitress accepts two kinds of user authentication.
 
 The first kind is BASIC authentication. A username and a password. Compatible with most, if not all browsers currently
