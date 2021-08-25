@@ -128,7 +128,7 @@ public final class TOMLReader {
         private void pair(String text) {
             String[] parts = text.split("=");
 
-            internalMap.put(parts[0], parts[1]);
+            internalMap.put(parts[0], parts[1].replace("\"", ""));
         }
 
     }
