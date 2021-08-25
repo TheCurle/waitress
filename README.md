@@ -62,7 +62,8 @@ of users, while retaining the capability to audit individual users and grant the
 ### Configuration
 
 Configuration of Waitress is bootstrapped through a TOML file. First, the data directory (where projects that are served
-and uploaded, are stored on disk). Additionally, the proxy cache can be configured here, but it is not required.
+and uploaded, are stored on disk). The listening port is also specified here.
+Additionally, the proxy cache can be configured here, but it is not required.
 
 You can also set the username and hash of the password for the owner account. The 
 owner account is never denied access to any file, and always has access to the admin endpoint.
