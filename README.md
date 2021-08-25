@@ -16,7 +16,10 @@ If one is found, then:
         * Access is checked. If the user (or anonymous) has access to read this file / repository, then it is returned
             via octet-stream.  
           If the user has no access to this file, then a 403 is returned.
-    * If the coordinate is hosted on a proxied repository, then a redirect occurs to that repository.
+    * If the coordinate is hosted on a proxied repository, then some checks are performed.  
+      If it is blacklisted, a 404 is returned.
+      If it (is whitelisted, or not blacklisted), and exists on disk, it is served.  
+      Otherwise, it is downloaded from the proxied repo, and cached on disk for future requests..
     * If the coordinate is not hosted on any tracked repository, then a 404 is returned.
 * If there is no valid maven coordinate in the URL, then:
     * Configured locations are checked - for the user dashboard and admin dashboard.  
@@ -59,7 +62,7 @@ of users, while retaining the capability to audit individual users and grant the
 ### Configuration
 
 Configuration of Waitress is bootstrapped through a TOML file. First, the data directory (where projects that are served
-and uploaded, are stored on disk).  
+and uploaded, are stored on disk). Additionally, the proxy cache can be configured here, but it is not required.
 
 You can also set the username and hash of the password for the owner account. The 
 owner account is never denied access to any file, and always has access to the admin endpoint.
