@@ -1,6 +1,8 @@
 package uk.gemwire.waitress;
 
+import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
+import uk.gemwire.waitress.web.Server;
 
 import java.io.FileReader;
 import java.util.HashMap;
@@ -66,8 +68,15 @@ public class Waitress {
         }
 
         try {
+            // Read Config
             HashMap<String, String> map = TOMLReader.read(new FileReader(parts[1]));
+
+            // DEBUG output
             System.out.println(map);
+            // Read config into the {@link Config} fields
+            Config.set(map);
+            // Start the server with the loaded config.
+            Server.start();
         } catch (Exception ignored) {}
 
         System.exit(0);
