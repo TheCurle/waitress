@@ -22,7 +22,7 @@ public class Server {
      * Sets up all the routing.
      *
      * By default, all maven coordinates are handled by a wrapper on "/".
-     * All endpoints are handled by their own wrapper.
+     * TODO: All endpoints are handled by their own wrapper.
      */
     public static void start() {
         Javalin server = Javalin.create().start(Config.LISTEN_PORT);
@@ -30,6 +30,9 @@ public class Server {
     }
 
     public static void serve(Context request) {
+        // We need to determine what's in the url.
+        // We can assume that we won't hit this for the endpoints.
+        // so, it's a matter of looking for /x/y/z/file-version.ext
 
     }
 }
