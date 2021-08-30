@@ -8,6 +8,7 @@ import java.util.StringTokenizer;
 
 /**
  * Contains a tiny parser for the TOML format, using StringTokeniser as a lexer.
+ * Also happens to work for ini and java properties files.
  *
  * Intended to only be able to read the file that is output by Waitress.
  * As such, it treats duplicate keys as invalid.
@@ -93,7 +94,7 @@ public final class TOMLReader {
                 // Due to the nature of tokenisation, this means that it can take one to three tokens to parse this.
 
                 int counter = 2;
-                // The next section may be repeated up to twice, so it is wrapped in a while loop, with a limiter of two.
+                // The next section may be repeated up to twice, so it is wrapped in a while loop, with a limiter of two
                 while(counter > 0) {
                     // Construct a full token.
                     if (tokens.hasMoreTokens()) {
@@ -109,7 +110,8 @@ public final class TOMLReader {
                                 counter = 0;
 
                         // Join the next token with the one we already have.
-                        token = new StringJoiner(" ").add(token).add(tempToken).toString();
+                        // Make sure there are no spaces involved. everything that goes into token must be a=b.
+                        token = new StringJoiner(" ").add(token.strip()).add(tempToken.strip()).toString();
                     } else {
                         throw new IllegalStateException("Unable to fully parse a key-value pair.");
                     }
