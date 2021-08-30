@@ -10,5 +10,8 @@ repositories {
 }
 
 dependencies {
+    // Web Server
     implementation 'io.javalin:javalin:3.13.11'
+    // BCrypt Password Encryption
+    implementation 'at.favre.lib:bcrypt:0.9.0'
 }
