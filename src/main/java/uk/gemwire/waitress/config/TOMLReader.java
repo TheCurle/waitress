@@ -66,6 +66,11 @@ public final class TOMLReader {
 
                 String token = tokens.nextToken();
 
+                // Don't need to do anything if we have a condensed x=y pair
+                if(token.contains("=") && (token.indexOf('=') < token.length())) {
+                    pair(token.strip());
+                    continue;
+                }
 
                 // # Comments should be skipped entirely.
                 if(token.contains("#")) {
@@ -108,6 +113,7 @@ public final class TOMLReader {
                             // If we have more than a = then it's right aligned, so stop passing over it
                             if(tempToken.length() > 1)
                                 counter = 0;
+
 
                         // Join the next token with the one we already have.
                         // Make sure there are no spaces involved. everything that goes into token must be a=b.
