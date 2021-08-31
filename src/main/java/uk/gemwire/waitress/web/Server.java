@@ -24,9 +24,14 @@ public class Server {
      * By default, all maven coordinates are handled by a wrapper on "/".
      * TODO: All endpoints are handled by their own wrapper.
      */
-    public static void start() {
+    public static void start() throws InterruptedException {
         Javalin server = Javalin.create().start(Config.LISTEN_PORT);
         server.get("/", Server::serve);
+
+        System.out.println("Server started. Waiting for requests.");
+
+        // Deadlock the current thread to keep it active.
+        Thread.currentThread().join();
     }
 
     public static void serve(Context request) {

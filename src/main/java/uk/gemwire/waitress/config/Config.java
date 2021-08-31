@@ -1,5 +1,6 @@
 package uk.gemwire.waitress.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -11,6 +12,9 @@ public final class Config {
     // The port number that the web server listens on.
     public static int LISTEN_PORT = 0;
 
+    public static String ADMIN_USERNAME = "";
+    public static String ADMIN_HASH = "";
+
     /**
      * Set the config values in the above fields.
      * Allows these fields to be used to access the below configuration values from any point in the program,
@@ -18,7 +22,13 @@ public final class Config {
      *
      * @param args The map of config name -> value to be used to set the fields.
      */
-    public static void set(Map<String,String> args) {
+    public static void set(HashMap<String, String> args) {
+        assert args.containsKey("listen_port");
         LISTEN_PORT = Integer.parseInt(args.get("listen_port"));
+
+        assert args.containsKey("username");
+        ADMIN_USERNAME = args.get("username");
+        assert args.containsKey("password");
+        ADMIN_HASH = args.get("password");
     }
 }

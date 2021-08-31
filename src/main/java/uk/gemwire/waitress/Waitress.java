@@ -1,11 +1,10 @@
 package uk.gemwire.waitress;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
+import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
 import uk.gemwire.waitress.web.Server;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +24,7 @@ import java.util.HashMap;
  * Temporary to-do list for the whole project:
  * - ~~Configuration reading~~
  * - ~~Web serving~~ note: still wip
- * - Password management
+ * - ~~Password management~~
  * - Repository reading
  * - Permission management
  * - Upload
@@ -47,9 +46,9 @@ public class Waitress {
      */
     public static void main(String[] args) {
         for(String arg : args) {
-            if(arg.startsWith("hash-password"))
+            if(arg.startsWith("-hash-password"))
                 hashPassword(arg);
-            if(arg.startsWith("cfg"))
+            if(arg.startsWith("-cfg"))
                 setup(arg);
         }
 
@@ -78,12 +77,16 @@ public class Waitress {
             HashMap<String, String> map = TOMLReader.read(new FileReader(parts[1]));
 
             // DEBUG output
-            System.out.println(map);
+            //System.out.println(map);
             // Read config into the {@link Config} fields
             Config.set(map);
+            // Prepare password authentication maps.
+            Auth.setupAuth();
             // Start the server with the loaded config.
             Server.start();
-        } catch (Exception ignored) {}
+        } catch (Exception exc) {
+            System.err.println(exc.getMessage());
+        }
 
         System.exit(0);
     }
@@ -99,22 +102,27 @@ public class Waitress {
         // Get the file from the argument
         String[] parts = argument.split("=");
         if(parts.length != 2) {
-            System.err.println("The hash-password argument requires a =PATH_TO_FILE segment.");
-            return;
+            System.out.println("The hash-password argument requires a =PATH_TO_FILE segment.");
+            System.exit(0);
         }
 
-        byte[] password;
+        byte[] hash;
 
-        try {
-            password = Files.readAllBytes(Paths.get(parts[1]));
-        } catch (IOException e) {
-            System.err.println("File " + parts[1] + " can't be read: " + e.getMessage());
-            return;
+        // This block means the password is purged from memory as soon as the hash is created.
+        {
+            byte[] password;
+
+            try {
+                password = Files.readAllBytes(Paths.get(parts[1]));
+            } catch (IOException e) {
+                System.out.println("File " + parts[1] + " can't be read: " + e.getMessage());
+                System.exit(0);
+                return;
+            }
+
+            // Password is read. Hash it and purge the plaintext password from memory.
+            hash = Auth.createPasswordHash(password);
         }
-
-        // Password is read. Hash it and purge the plaintext password from memory.
-        byte[] hash = BCrypt.withDefaults().hash(25, password);
-        password = new byte[] { (byte) 255};
 
         try {
             // Write the hash into the file.
@@ -124,6 +132,7 @@ public class Waitress {
         }
 
         // Done.
+        System.exit(0);
     }
 
 
