@@ -1,7 +1,6 @@
 package uk.gemwire.waitress.config;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * After the TOML configuration is read via the {@link TOMLReader}, the fields here are populated.

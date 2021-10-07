@@ -1,5 +1,7 @@
 package uk.gemwire.waitress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
@@ -34,6 +36,9 @@ import java.util.HashMap;
  * @author Curle
  */
 public class Waitress {
+
+    // Anonymous logger instance for the tool.
+    public static final Logger LOGGER = LoggerFactory.getLogger("Waitress");
 
     /**
      * Requires one argument.
@@ -75,13 +80,13 @@ public class Waitress {
         try {
             // Read Config
             HashMap<String, String> map = TOMLReader.read(new FileReader(parts[1]));
-
-            // DEBUG output
-            //System.out.println(map);
             // Read config into the {@link Config} fields
             Config.set(map);
             // Prepare password authentication maps.
             Auth.setupAuth();
+            // TODO: Cache all found repos in the data folder.
+
+            LOGGER.info("Set up. Starting route management.");
             // Start the server with the loaded config.
             Server.start();
         } catch (Exception exc) {
@@ -116,7 +121,7 @@ public class Waitress {
                 password = Files.readAllBytes(Paths.get(parts[1]));
             } catch (IOException e) {
                 System.out.println("File " + parts[1] + " can't be read: " + e.getMessage());
-                System.exit(0);
+                System.exit(-1);
                 return;
             }
 
@@ -130,6 +135,8 @@ public class Waitress {
         } catch (IOException e) {
             System.err.println("File " + parts[1] + " can't be written to: " + e.getMessage());
         }
+
+        LOGGER.info("Password hashed and saved into the same file.");
 
         // Done.
         System.exit(0);

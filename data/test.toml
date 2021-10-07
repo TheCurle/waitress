@@ -1,14 +1,16 @@
 [[bootstrap]]
 # The username and password of the root account.
 username = "test"
-password = "00000001"
+password = "$2a$12$8xN3VY.ImbkgXGhKR.GcZujjaVx8RkRtYRqy2J49t.0UL2pDS2Peu"
+
+listen_port=25505
 
 [[data]]
 
 # Where all the data is stored.
 data_dir = "/data"
 # Should we proxy a repository?
-proxy = true
+proxy = false
 # List the repositories to proxy.
 proxy_repo = "https://maven.gemwire.uk/"
 

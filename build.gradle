@@ -14,4 +14,7 @@ dependencies {
     implementation 'io.javalin:javalin:3.13.11'
     // BCrypt Password Encryption
     implementation 'at.favre.lib:bcrypt:0.9.0'
+
+    implementation 'org.slf4j:slf4j-simple:1.7.30'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
 }
