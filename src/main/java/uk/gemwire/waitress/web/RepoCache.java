@@ -63,11 +63,13 @@ public class RepoCache {
                 List<File> contained = Arrays.asList(flist);
                 contained.forEach(c -> {
                     String classifier = c.getName().substring(artifact.length() + version.length() + 1, c.getName().lastIndexOf('.'));
+                    String extension = c.getName().substring(c.getName().lastIndexOf('.') + 1);
+
                     if(classifier.length() > 0)
-                        get(group, artifact).addVersion(version, classifier);
+                        get(group, artifact).addVersion(version, classifier, extension);
                     else
-                        get(group, artifact).addVersion(version);
-                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " is now tracked.");
+                        get(group, artifact).addVersion(version, "", extension);
+                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " and extension " + extension + " is now tracked.");
                 });
 
             });
@@ -124,6 +126,19 @@ public class RepoCache {
 
         Artifact a = get(groupID, artifactID);
         return a.tracksVersion(version, classifier);
+    }
+
+    /**
+     * Returns whether an artifact with the given Group, ID, Version, Classifier and Extension exist in the cache.
+     * @see #contains(String, String, String)
+     * @see #contains(String, String)
+     */
+    public static boolean contains(String groupID, String artifactID, String version, String classifier, String extension) {
+        if (!contains(groupID, artifactID))
+            return false;
+
+        Artifact a = get(groupID, artifactID);
+        return a.tracksVersion(version, classifier, extension);
     }
 
     /**

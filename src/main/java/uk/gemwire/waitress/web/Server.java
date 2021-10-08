@@ -68,19 +68,24 @@ public class Server {
         String groupID = matcher.group("group");
         final String artifactID = matcher.group("artifact");
         final String version = matcher.group("version");
-        final String classifier = matcher.group("classifier");
+        String classifier = matcher.group("classifier");
         final String extension = matcher.group("extension");
 
         // Cleanup the group. Sometimes it ends with a "/".
         if (groupID.charAt(groupID.length() - 1) == '/')
             groupID = groupID.substring(0, groupID.length() - 1);
 
-        Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + (classifier != null ? classifier : "") + "." + extension + " located. Checking whether we can handle it..");
+        // Sometimes the classifier is null. We need it to be "".
+        if (classifier == null)
+            classifier = "";
 
-        if (RepoCache.contains(groupID, artifactID, version, classifier)) {
+        Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " located. Checking whether we can handle it..");
+
+        if (RepoCache.contains(groupID, artifactID, version, classifier, extension)) {
             Waitress.LOGGER.info("Requested file is in the cache. Serving..");
             try {
-                request.result(new FileInputStream(Config.DATA_DIR + groupID + "/" + artifactID + "/" + version + "/" + artifactID + "-" + version + (classifier != null ? classifier : "") + "." + extension));
+                // TODO: binary stream non-text files.
+                request.result(new FileInputStream(Config.DATA_DIR + groupID + "/" + artifactID + "/" + version + "/" + artifactID + "-" + version + classifier + "." + extension));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
