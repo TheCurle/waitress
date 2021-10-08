@@ -5,6 +5,10 @@ import io.javalin.http.Context;
 import uk.gemwire.waitress.Waitress;
 import uk.gemwire.waitress.config.Config;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,8 +36,9 @@ public class Server {
      * @param request The metadata of the request.
      */
     private static void getEndpoint(Context request) {
-
+        Waitress.LOGGER.warn("Invalid request " + request.path() + " cannot be handled.");
         request.status(400);
+
 
     }
 
@@ -54,20 +59,36 @@ public class Server {
         final Matcher matcher = MAVEN_PATTERN.matcher(request.path());
 
         // Early exit if this isn't a valid coordinate.
-        if(!matcher.matches())
+        if(!matcher.matches()) {
             getEndpoint(request);
+            return;
+        }
 
         // Set up components of the request.
-        final String groupID = matcher.group("group");
+        String groupID = matcher.group("group");
         final String artifactID = matcher.group("artifact");
         final String version = matcher.group("version");
         final String classifier = matcher.group("classifier");
         final String extension = matcher.group("extension");
 
-        Waitress.LOGGER.info("Request for " + groupID + artifactID +  "/" + version + "/" + artifactID +  "-" + version + (classifier != null ? classifier : "") + "." + extension + " located. Checking whether we can handle it..");
+        // Cleanup the group. Sometimes it ends with a "/".
+        if (groupID.charAt(groupID.length() - 1) == '/')
+            groupID = groupID.substring(0, groupID.length() - 1);
 
+        Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + (classifier != null ? classifier : "") + "." + extension + " located. Checking whether we can handle it..");
 
-        request.status(200);
+        if (RepoCache.contains(groupID, artifactID, version)) {
+            Waitress.LOGGER.info("Requested file is in the cache. Serving..");
+            try {
+                request.result(new FileInputStream(Config.DATA_DIR + groupID + "/" + artifactID + "/" + version + "/" + artifactID + "-" + version + (classifier != null ? classifier : "") + "." + extension));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Waitress.LOGGER.warn("File not handled by this repository. Mirroring not implemented.");
+            request.status(404);
+            request.result("Not Found");
+        }
 
     }
 

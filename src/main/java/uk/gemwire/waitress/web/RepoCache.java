@@ -138,6 +138,4 @@ public class RepoCache {
             
         return null;
     }
-
-    private static void doNothing() {}
 }
