@@ -28,7 +28,7 @@ import java.util.HashMap;
  * - ~~Configuration reading~~
  * - ~~Web serving~~ note: still wip
  * - ~~Password management~~
- * - Repository reading
+ * - ~~Repository reading~~
  * - Permission management
  * - Upload
  * - Download
