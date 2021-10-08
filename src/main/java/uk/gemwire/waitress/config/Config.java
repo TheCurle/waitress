@@ -11,6 +11,9 @@ public final class Config {
     // The port number that the web server listens on.
     public static int LISTEN_PORT = 0;
 
+    // The folder where repository data is stored.
+    public static String DATA_DIR = "";
+
     public static String ADMIN_USERNAME = "";
     public static String ADMIN_HASH = "";
 
@@ -25,6 +28,9 @@ public final class Config {
         assert args.containsKey("listen_port");
         LISTEN_PORT = Integer.parseInt(args.get("listen_port"));
 
+
+        assert args.containsKey("data_dir");
+        DATA_DIR = args.get("data_dir");
         assert args.containsKey("username");
         ADMIN_USERNAME = args.get("username");
         assert args.containsKey("password");

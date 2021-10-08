@@ -8,7 +8,7 @@ listen_port=25505
 [[data]]
 
 # Where all the data is stored.
-data_dir = "/data"
+data_dir = "data/"
 # Should we proxy a repository?
 proxy = false
 # List the repositories to proxy.

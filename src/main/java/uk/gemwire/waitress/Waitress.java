@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
+import uk.gemwire.waitress.web.RepoCache;
 import uk.gemwire.waitress.web.Server;
 
 import java.io.FileReader;
@@ -84,7 +85,8 @@ public class Waitress {
             Config.set(map);
             // Prepare password authentication maps.
             Auth.setupAuth();
-            // TODO: Cache all found repos in the data folder.
+            // Cache all known repositories.
+            RepoCache.enumerate();
 
             LOGGER.info("Set up. Starting route management.");
             // Start the server with the loaded config.
