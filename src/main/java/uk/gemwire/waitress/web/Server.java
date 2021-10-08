@@ -77,7 +77,7 @@ public class Server {
 
         Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + (classifier != null ? classifier : "") + "." + extension + " located. Checking whether we can handle it..");
 
-        if (RepoCache.contains(groupID, artifactID, version)) {
+        if (RepoCache.contains(groupID, artifactID, version, classifier)) {
             Waitress.LOGGER.info("Requested file is in the cache. Serving..");
             try {
                 request.result(new FileInputStream(Config.DATA_DIR + groupID + "/" + artifactID + "/" + version + "/" + artifactID + "-" + version + (classifier != null ? classifier : "") + "." + extension));
