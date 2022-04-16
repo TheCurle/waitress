@@ -10,7 +10,7 @@ listen_port=25505
 # Where all the data is stored.
 data_dir = "data/"
 # Should we proxy a repository?
-proxy = false
+proxy = true
 # List the repositories to proxy.
 proxy_repo = "https://maven.gemwire.uk/"
 

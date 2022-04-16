@@ -16,6 +16,8 @@ public final class Config {
 
     public static String ADMIN_USERNAME = "";
     public static String ADMIN_HASH = "";
+    public static boolean SHOULD_PROXY = false;
+    public static String PROXY_REPO = "";
 
     /**
      * Set the config values in the above fields.
@@ -35,5 +37,21 @@ public final class Config {
         ADMIN_USERNAME = args.get("username");
         assert args.containsKey("password");
         ADMIN_HASH = args.get("password");
+
+        if (args.containsKey("proxy")){
+            SHOULD_PROXY = Boolean.parseBoolean(args.get("proxy"));
+            if (SHOULD_PROXY) {
+                assert args.containsKey("proxy_repo");
+                PROXY_REPO = args.get("proxy_repo");
+            }
+        }
+
+        System.out.println("Port: " + LISTEN_PORT);
+        System.out.println("Data: " + DATA_DIR);
+        System.out.println("Username: " + ADMIN_USERNAME);
+        System.out.println("Hash: " + ADMIN_HASH);
+        if (SHOULD_PROXY){
+            System.out.println("Proxy enabled, url: " + PROXY_REPO);
+        }
     }
 }
