@@ -30,8 +30,8 @@ import java.util.HashMap;
  * - ~~Password management~~
  * - ~~Repository reading~~
  * - Permission management
- * - Upload
- * - Download
+ * - ~~Upload~~ (without permission)
+ * - ~~Download~~ (without permission)
  * - Management Pages
  *
  * @author Curle

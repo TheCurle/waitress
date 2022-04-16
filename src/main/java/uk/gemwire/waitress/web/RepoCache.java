@@ -153,4 +153,12 @@ public class RepoCache {
             
         return null;
     }
+
+    /**
+     * Adds artifact into cache.
+     * If given artifact already exists, do nothing
+     */
+    public static void addArtifact(Artifact artifact) {
+        if (!artifacts.contains(artifact))artifacts.add(artifact);
+    }
 }
