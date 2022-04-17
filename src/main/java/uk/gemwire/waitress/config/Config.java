@@ -18,6 +18,8 @@ public final class Config {
     public static String ADMIN_HASH = "";
     public static boolean SHOULD_PROXY = false;
     public static String PROXY_REPO = "";
+    public static String USER_DATA = "";
+    public static String PERM_DATA = "";
 
     /**
      * Set the config values in the above fields.
@@ -29,7 +31,6 @@ public final class Config {
     public static void set(HashMap<String, String> args) {
         assert args.containsKey("listen_port");
         LISTEN_PORT = Integer.parseInt(args.get("listen_port"));
-
 
         assert args.containsKey("data_dir");
         DATA_DIR = args.get("data_dir");
@@ -45,6 +46,10 @@ public final class Config {
                 PROXY_REPO = args.get("proxy_repo");
             }
         }
+        assert args.containsKey("user_data");
+        USER_DATA = args.get("user_data");
+        assert args.containsKey("permission_data");
+        PERM_DATA = args.get("permission_data");
 
         System.out.println("Port: " + LISTEN_PORT);
         System.out.println("Data: " + DATA_DIR);
@@ -53,5 +58,6 @@ public final class Config {
         if (SHOULD_PROXY){
             System.out.println("Proxy enabled, url: " + PROXY_REPO);
         }
+        System.out.println("User data: " + USER_DATA);
     }
 }
