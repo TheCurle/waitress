@@ -117,4 +117,22 @@ public class Organization implements Entity {
         // Fall back on NONE, as we don't have anything to do with this group.
         return PermissionLevel.NONE;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Organization that = (Organization) o;
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getName() + ":[" + String.join(" , ", teams.stream().map(Team::toString).toList()) + "]";
+    }
 }

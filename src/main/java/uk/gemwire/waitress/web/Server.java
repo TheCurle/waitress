@@ -1,11 +1,16 @@
 package uk.gemwire.waitress.web;
 
 import io.javalin.Javalin;
+import io.javalin.core.security.BasicAuthCredentials;
 import io.javalin.core.util.FileUtil;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import org.jetbrains.annotations.NotNull;
 import uk.gemwire.waitress.Waitress;
+import uk.gemwire.waitress.authentication.Auth;
+import uk.gemwire.waitress.authentication.CalledTooEarlyException;
+import uk.gemwire.waitress.authentication.PermissionLevel;
+import uk.gemwire.waitress.authentication.entity.User;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.web.repository.Artifact;
 
@@ -59,10 +64,32 @@ public class Server {
         final String classifier = coordinate.classifier;
         final String extension = coordinate.extension;
 
+        User user = null;
+        try{
+            if(request.basicAuthCredentialsExist()) {
+                BasicAuthCredentials credentials = request.basicAuthCredentials();
+                if (!Auth.checkPassword(credentials.getUsername(), credentials.getPassword())) {
+                    request.status(401);
+                    return;
+                }
+                user = Auth.getUser(credentials.getUsername()).get();
+            } else {
+                user = Auth.getUser("anonymous").get();
+            }
+        }catch (CalledTooEarlyException ignored) {
+            // ....I hope this catch case never happens
+        }
+
         Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " located. Checking whether we can handle it..");
 
         if (RepoCache.contains(groupID, artifactID, version, classifier, extension)) {
-            Waitress.LOGGER.info("Requested file is in the cache. Serving..");
+            Waitress.LOGGER.info("Requested file is in the cache.");
+            PermissionLevel permissionLevel = user.getPermissionFor(groupID, artifactID);
+            if (permissionLevel.level < PermissionLevel.READ.level) {
+                Waitress.LOGGER.info("User " + user.getUsername() + " does not have permission for requested file");
+                request.status(403);
+                return;
+            }
             try {
                 // TODO: binary stream non-text files.
                 request.result(new FileInputStream(Config.DATA_DIR + groupID + "/" + artifactID + "/" + version + "/" + artifactID + "-" + version + classifier + "." + extension));

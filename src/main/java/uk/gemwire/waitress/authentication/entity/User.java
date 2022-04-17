@@ -73,7 +73,10 @@ public class User implements Entity{
      * @return The instance of this user.
      */
     public User addTeam(Team newTeam) {
-        this.teams.add(newTeam);
+        if (!memberOf(newTeam)){
+            this.teams.add(newTeam);
+            newTeam.addUser(this);
+        }
         return this;
     }
 
@@ -159,7 +162,7 @@ public class User implements Entity{
             // This allows for a user in two teams - one that is blocked to an Artifact,
             //  and one that is an administrator on the same Artifact - to only receive the widest permission.
 
-            if (tTemp.compareTo(tPerm) < 0) // compareTo returns a negative number if the object called is lower than the object passed.
+            if (tPerm.compareTo(tTemp) < 0) // compareTo returns a negative number if the object called is lower than the object passed.
                 tPerm = tTemp;
         }
 

@@ -5,6 +5,7 @@ import uk.gemwire.waitress.authentication.PermissionLevel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A group of {@link User}s that provides permission overrides for a set of Groups and Artifacts.
@@ -47,6 +48,7 @@ public class Team implements Entity{
         this.users = new ArrayList<>();
         this.artifactPermissions = new HashMap<>();
         this.groupPermissions = new HashMap<>();
+        org.addTeam(this);
     }
 
     public String getName() {
@@ -68,7 +70,10 @@ public class Team implements Entity{
      * @return The instance of this Team.
      */
     public Team addUser(User newUser) {
-        this.users.add(newUser);
+        if (!contains(newUser)){
+            this.users.add(newUser);
+            newUser.addTeam(this);
+        }
         return this;
     }
 
@@ -88,6 +93,7 @@ public class Team implements Entity{
      * @param perm The permission to override with.
      * @return The instance of this Team.
      */
+    @Override
     public Team addArtifactOverride(String groupID, String artifactID, PermissionLevel perm) {
         this.artifactPermissions.put(groupID + "/" + artifactID, perm);
         return this;
@@ -100,6 +106,7 @@ public class Team implements Entity{
      * @param perm The permission to override with.
      * @return The instance of this Team.
      */
+    @Override
     public Team addGroupOverride(String groupID, PermissionLevel perm) {
         this.groupPermissions.put(groupID, perm);
         return this;
@@ -126,7 +133,7 @@ public class Team implements Entity{
      */
     public PermissionLevel getPermissionFor(String group, String artifact) {
         boolean hasGroupOverride = groupPermissions.containsKey(group);
-        boolean hasArtifactOverride = artifactPermissions.containsKey(artifact);
+        boolean hasArtifactOverride = artifactPermissions.containsKey(group + "/" + artifact);
 
         // Team specific permissions always take priority.
         if (hasArtifactOverride) return artifactPermissions.get(group + "/" + artifact);
@@ -135,5 +142,23 @@ public class Team implements Entity{
         // The only thing left to fall back on is the organization we belong to.
         // The org will handle falling back to NONE for us.
         return org.getPermissionFor(group, artifact);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Team team = (Team) o;
+        return name.equals(team.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    @Override
+    public String toString() {
+        return getName() + ":{" + String.join(" , ", users.stream().map(User::getUsername).toList()) + "}";
     }
 }
