@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author Curle
  */
-public class Organization {
+public class Organization implements Entity {
 
     // The name of this Organization.
     private final String name;
@@ -72,6 +72,7 @@ public class Organization {
      * @param perm The permission to override with.
      * @return The instance of this Organization.
      */
+    @Override
     public Organization addArtifactOverride(String groupID, String artifactID, PermissionLevel perm) {
         this.artifactPermissions.put(groupID + "/" + artifactID, perm);
         return this;
@@ -83,6 +84,7 @@ public class Organization {
      * @param perm The permission to override with.
      * @return The instance of this Organization.
      */
+    @Override
     public Organization addGroupOverride(String groupID, PermissionLevel perm) {
         this.groupPermissions.put(groupID, perm);
         return this;

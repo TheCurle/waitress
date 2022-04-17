@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author Curle
  */
-public class Team {
+public class Team implements Entity{
 
     // The name of this Team.
     private final String name;
