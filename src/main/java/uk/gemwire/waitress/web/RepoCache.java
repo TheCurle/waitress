@@ -69,7 +69,7 @@ public class RepoCache {
                         get(group, artifact).addVersion(version, classifier, extension);
                     else
                         get(group, artifact).addVersion(version, "", extension);
-                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " and extension " + extension + " is now tracked.");
+                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " with extension " + extension + " is now tracked.");
                 });
 
             });
@@ -155,10 +155,16 @@ public class RepoCache {
     }
 
     /**
-     * Adds artifact into cache.
-     * If given artifact already exists, do nothing
+     * If it doesn't already have the artifact, adds it and returns it
+     * if it does, return already existing one
+     * @return Artifact with given groupID and artifactID
      */
-    public static void addArtifact(Artifact artifact) {
-        if (!artifacts.contains(artifact))artifacts.add(artifact);
+    public static Artifact tryAddArtifact(String groupID, String artifactID) {
+        Artifact artifact = get(groupID, artifactID);
+        if (artifact == null) {
+            artifact = new Artifact(groupID, artifactID);
+            artifacts.add(artifact);
+        }
+        return artifact;
     }
 }

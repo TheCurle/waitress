@@ -108,7 +108,7 @@ public class Organization implements Entity {
      */
     public PermissionLevel getPermissionFor(String group, String artifact) {
         boolean hasGroupOverride = groupPermissions.containsKey(group);
-        boolean hasArtifactOverride = artifactPermissions.containsKey(artifact);
+        boolean hasArtifactOverride = artifactPermissions.containsKey(group + "/" + artifact);
 
         // Team specific permissions always take priority.
         if (hasArtifactOverride) return artifactPermissions.get(group + "/" + artifact);
@@ -116,19 +116,6 @@ public class Organization implements Entity {
 
         // Fall back on NONE, as we don't have anything to do with this group.
         return PermissionLevel.NONE;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Organization that = (Organization) o;
-        return name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return name.hashCode();
     }
 
     @Override

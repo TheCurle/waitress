@@ -131,23 +131,4 @@ public class Artifact {
 
         return false;
     }
-
-    /**
-     * Checks if 2 Objects are same
-     * For Artifacts, it only compares groupID and artifactID
-     * @param o object to compare
-     * @return true if they're same
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Artifact artifact = (Artifact) o;
-        return groupID.equals(artifact.groupID) && artifactID.equals(artifact.artifactID);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(groupID, artifactID);
-    }
 }

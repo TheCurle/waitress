@@ -8,7 +8,10 @@ import uk.gemwire.waitress.authentication.entity.Team;
 import uk.gemwire.waitress.authentication.entity.User;
 import uk.gemwire.waitress.config.Config;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -29,6 +32,9 @@ public final class Auth {
     // True if the Config has been loaded and we're ready to rock.
     private static boolean ready = false;
 
+    // Default account for requests without credentials
+    public static User anonymous;
+
     /**
      * Initialize the Auth system.
      * Adds the admin user with global permissions and anonymous user to the user map.
@@ -38,9 +44,10 @@ public final class Auth {
         ready = true;
         // the above means the CalledTooEarlyException can't be thrown. ignore the error
         try {
-            addUser("anonymous", "".getBytes(StandardCharsets.UTF_8));
+            anonymous = addUser("anonymous", "".getBytes(StandardCharsets.UTF_8));
             addUser(Config.ADMIN_USERNAME, Config.ADMIN_HASH.getBytes(StandardCharsets.UTF_8));
-            loadData();
+            loadUsers(new File(Config.USER_DATA));
+            loadPermissions(new File(Config.PERM_DATA));
             organizations.forEach(org -> Waitress.LOGGER.info("Organization " + org.toString()));
         } catch (CalledTooEarlyException ignored) {
         } catch (IOException e) {
@@ -82,7 +89,7 @@ public final class Auth {
      */
     public static Optional<Organization> getOrganization(String orgName) throws CalledTooEarlyException {
         if (!ready) throw new CalledTooEarlyException();
-        return organizations.parallelStream().filter(org -> org.getName().equals(orgName)).findAny();
+        return organizations.parallelStream().filter(org -> org.getName().equals(orgName)).findFirst();
     }
 
     /**
@@ -95,7 +102,7 @@ public final class Auth {
      */
     public static Optional<Team> getTeam(String teamName) throws CalledTooEarlyException {
         if (!ready) throw new CalledTooEarlyException();
-        return teams.parallelStream().filter(team -> team.getName().equals(teamName)).findAny();
+        return teams.parallelStream().filter(team -> team.getName().equals(teamName)).findFirst();
     }
 
     /**
@@ -108,7 +115,7 @@ public final class Auth {
      */
     public static Optional<User> getUser(String username) throws CalledTooEarlyException {
         if (!ready) throw new CalledTooEarlyException();
-        return users.keySet().parallelStream().filter(user -> user.getUsername().equals(username)).findAny();
+        return users.keySet().parallelStream().filter(user -> user.getUsername().equals(username)).findFirst();
     }
 
     /**
@@ -146,99 +153,130 @@ public final class Auth {
         return BCrypt.withDefaults().hash(12, password);
     }
 
-
-    // TODO Switch to TOMLWriter in the future
-
     /**
-     * Warning: This method has to be used when user data at least specifies ORGN and TEAM
-     * Otherwise it will start writing before those 2
-     * Leaving ORGN and TEAM empty is fine
-     */
-    public static void writeUser(String username, String password) throws IOException {
-        File file = new File(Config.USER_DATA);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.append(username).append(" ").append(password);
-        writer.newLine();
-        writer.flush();
-        writer.close();
-    }
-
-    // TODO Switch to TOMLWriter in the future
-
-    /**
-     * This does not clear current team list, this works under assumption of getting invoked during setup
+     * TODO Switch to TOML in the future
+     * This should only be called once during setup, as it does not clear current data
      * Password for tmvkrpxl0 account is "password"
+     *
+     * Currently, user file format is:
+     * ORGN `List of organizations`
+     * TEAM `List of teams, each team entry follows this form: team_name[organization_name]. Bracket [] is necessary`
+     *
+     * `user's name` `password hash` `List of organizations`
+     * `user's name` `password hash` `List of organizations`
+     * `user's name` `password hash` `List of organizations`
+     *
+     * Temporary user file is `data/users`
+     * @param userFile User file path
      */
-    public static void loadData() throws IOException, CalledTooEarlyException {
-        final File userFile = new File(Config.USER_DATA);
+    public static void loadUsers(final File userFile) throws IOException, CalledTooEarlyException {
         try(final BufferedReader reader = new BufferedReader(new FileReader(userFile, StandardCharsets.UTF_8))) {
-            organizations.addAll(Arrays.stream(reader.readLine().substring(5).split(" ")).map(Organization::new).toList());
-            for (String teamEntry : reader.readLine().substring(5).split(" ")) {
+            String firstLine = reader.readLine().substring(5); // First line is: "ORGN {List of organizations}", "ORGN " must be skipped
+            List<Organization> orgToAdd = Arrays.stream(firstLine.split(" ")).map(Organization::new).toList();
+            organizations.addAll(orgToAdd);
+
+            String secondLine = reader.readLine().substring(5);// Second line is: "TEAM {List of teams}", "TEAM " must be skipped
+            for (String teamEntry : secondLine.split(" ")) {
                 final int leftBracket = teamEntry.lastIndexOf('[');
                 final String orgName = teamEntry.substring(leftBracket + 1, teamEntry.length() - 1);
+
                 final String teamName = teamEntry.substring(0, leftBracket);
                 getOrganization(orgName).ifPresentOrElse(
-                        org -> teams.add(new Team(teamName, org)),
+                        org -> {
+                            Team team = new Team(teamName, org);
+                            teams.add(team);
+                            org.addTeam(team);
+                        },
                         () -> Waitress.LOGGER.warn("Organization " + orgName + " for team " + teamName + " does not exist! Ignoring..")
                 );
             }
 
-            for (String userEntry : reader.lines().toList()) {
-                if (userEntry.isEmpty()) continue;
+            for (String userEntry : reader.lines().toList()) {// Rest of the file from now on is user entry
+                if (userEntry.isEmpty()) continue; // Ignore empty lines
                 final String[] split = userEntry.split(" ");
                 final String name = split[0];
                 final byte[] hash = split[1].getBytes(StandardCharsets.UTF_8);
-                final User user = addUser(name, hash); // Should this line get existing user if user already exists?
+                final User user = addUser(name, hash); // Should it get existing user if user already exists?
                 for (int i = 2; i < split.length; i++) {
                     final String teamName = split[i];
                     getTeam(teamName).ifPresentOrElse(
-                            org -> user.addTeam(org),
+                            team -> {
+                                user.addTeam(team);
+                                team.addUser(user);
+                            },
                             () -> Waitress.LOGGER.warn("User " + name + " is in non-existing team " + teamName + "! Ignoring..")
                     );
                 }
             }
             // Done loading all user data, now loading permission override
         }
-        final File permFile = new File(Config.PERM_DATA);
+    }
+
+    /**
+     * This should only be called once during setup, as it does not clear current data
+     *
+     * Currently, permission file format is:
+     * `GroupID` `ArtifactID` `Permission Level in integer` `List of entities`
+     * `GroupID` `Permission Level in integer` `List of entities`
+     *
+     *
+     * ArtifactID can be omitted when setting group permission override
+     * an entity could be one of these: organization, team or user
+     * Organization is specified as: [Organization's name]
+     * Team is specified as: {Team's  name}
+     * User is specified as: (User's name)
+     * Brackets are necessary for all of those 3 cases, and type of bracket is important
+     *
+     * Temporary permission file is `data/permissions`
+     * @param permFile Permission file path
+     */
+    public static void loadPermissions(final File permFile) throws IOException, CalledTooEarlyException {
         try(final BufferedReader reader = new BufferedReader(new FileReader(permFile))) {
-            int lineNumber = 0; // This is for printing which line was invalid
+            int lineNumber = 0; // This is debug purpose, to see which line was invalid
             for (String permEntry : reader.lines().toList()) {
                 lineNumber++;
                 final String[] split = permEntry.split(" ");
                 final String groupID = split[0];
+
+                // Check if this entry contains Artifact ID, below will be null when it doesn't
                 String artifactId = null;
                 final PermissionLevel permission;
                 {
-                    int intLevel;
+                    int intPermission;
                     try {
-                        intLevel = Integer.parseInt(split[1]);
+                        intPermission = Integer.parseInt(split[1]);
                     } catch (NumberFormatException exception) {
+                        // When Index 1 is Artifact ID and not permission level
                         artifactId = split[1];
                         try {
-                            intLevel = Integer.parseInt(split[2]);
+                            intPermission = Integer.parseInt(split[2]);
                         } catch (NumberFormatException configInvalid) {
                             Waitress.LOGGER.warn("Permission level defined at line " + lineNumber + " is invalid!");
                             continue;
                         }
                     }
-                    permission = PermissionLevel.fromInt(intLevel);
+                    permission = PermissionLevel.fromInt(intPermission);
                 }
-                if (artifactId == null) { // Only group id is specified
+
+                if (artifactId == null) {
                     for (int i = 2; i < split.length; i++) {
                         String target = split[i];
-                        parseEntity(target).ifPresentOrElse(
-                                entity -> entity.addGroupOverride(groupID, permission),
-                                () -> Waitress.LOGGER.warn(getEntityType(target) + " specified in permission file does not exist!")
-                        );
+                        Optional<? extends Entity> entity = parseEntity(target);
+                        if (entity.isPresent()) {
+                            entity.get().addGroupOverride(groupID, permission);
+                        }else {
+                            Waitress.LOGGER.warn("Entity " + target + " in permission file at line " + lineNumber + " does not exist!");
+                        }
                     }
-                } else { // artifact id is also specified
+                } else {
                     for (int i = 3; i < split.length; i++) {
                         String target = split[i];
-                        String finalArtifactId = artifactId;
-                        parseEntity(target).ifPresentOrElse(
-                                entity -> entity.addArtifactOverride(groupID, finalArtifactId, permission),
-                                () -> Waitress.LOGGER.warn(getEntityType(target) + " specified in permission file does not exist!")
-                        );
+                        Optional<? extends Entity> entity = parseEntity(target);
+                        if (entity.isPresent()) {
+                            entity.get().addArtifactOverride(groupID, artifactId, permission);
+                        }else {
+                            Waitress.LOGGER.warn("Entity " + target + " in permission file at line " + lineNumber + " does not exist!");
+                        }
                     }
                 }
             }
@@ -246,27 +284,21 @@ public final class Auth {
     }
 
     /**
-     * This only exists for printing error
+     * Parses given string to Entity
+     * When given string is wrapped in [], it returns Organization
+     * When given string is wrapped in {}, it returns Team
+     * When given string is wrapped in (), it returns User
+     * @param entityEntry Entity entry
+     * @return One of those 3 Entities
      */
-    private static String getEntityType(String entityEntry) {
-        final String stripped = entityEntry.substring(1, entityEntry.length() - 1);
-        if (entityEntry.startsWith("[")) {
-            return "Organization" + stripped;
-        }else if (entityEntry.startsWith("{")){
-            return "Team" + stripped;
-        }else if (entityEntry.startsWith("(")) {
-            return "User" + stripped;
-        }else return "Unknown entity " + entityEntry;
-    }
-
     private static Optional<? extends Entity> parseEntity(String entityEntry) throws CalledTooEarlyException {
-        final String stripped = entityEntry.substring(1, entityEntry.length() - 1);
+        final String noBracket = entityEntry.substring(1, entityEntry.length() - 1);
         if (entityEntry.startsWith("[")) {
-            return getOrganization(stripped);
+            return getOrganization(noBracket);
         }else if (entityEntry.startsWith("{")){
-            return getTeam(stripped);
+            return getTeam(noBracket);
         }else if (entityEntry.startsWith("(")) {
-            return getUser(stripped);
+            return getUser(noBracket);
         }else return Optional.empty();
     }
 }

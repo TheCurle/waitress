@@ -73,10 +73,7 @@ public class User implements Entity{
      * @return The instance of this user.
      */
     public User addTeam(Team newTeam) {
-        if (!memberOf(newTeam)){
-            this.teams.add(newTeam);
-            newTeam.addUser(this);
-        }
+        this.teams.add(newTeam);
         return this;
     }
 
