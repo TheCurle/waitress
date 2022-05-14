@@ -52,12 +52,12 @@ public final class Config {
         PERM_DATA = args.get("permission_data");
 
         System.out.println("Port: " + LISTEN_PORT);
-        System.out.println("Data: " + DATA_DIR);
-        System.out.println("Username: " + ADMIN_USERNAME);
-        System.out.println("Hash: " + ADMIN_HASH);
+        System.out.println("Data directory: " + DATA_DIR);
+        System.out.println("Admin username: " + ADMIN_USERNAME);
+        System.out.println("Admin hash: " + ADMIN_HASH);
         if (SHOULD_PROXY){
             System.out.println("Proxy enabled, url: " + PROXY_REPO);
         }
-        System.out.println("User data: " + USER_DATA);
+        System.out.println("User data path: " + USER_DATA);
     }
 }
