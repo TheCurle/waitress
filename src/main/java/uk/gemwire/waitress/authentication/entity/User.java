@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @author Curle
  */
-public class User {
+public class User implements Entity{
 
     // The String by which this user can be identified.
     // Every username is globally unique.
@@ -95,6 +95,7 @@ public class User {
      * @param perm The permission to override with.
      * @return The instance of this user.
      */
+    @Override
     public User addArtifactOverride(String groupID, String artifactID, PermissionLevel perm) {
         this.artifactPermissions.put(groupID + "/" + artifactID, perm);
         return this;
@@ -107,6 +108,7 @@ public class User {
      * @param perm The permission to override with.
      * @return The instance of this user.
      */
+    @Override
     public User addGroupOverride(String groupID, PermissionLevel perm) {
         this.groupPermissions.put(groupID, perm);
         return this;
@@ -157,7 +159,7 @@ public class User {
             // This allows for a user in two teams - one that is blocked to an Artifact,
             //  and one that is an administrator on the same Artifact - to only receive the widest permission.
 
-            if (tTemp.compareTo(tPerm) < 0) // compareTo returns a negative number if the object called is lower than the object passed.
+            if (tPerm.compareTo(tTemp) < 0) // compareTo returns a negative number if the object called is lower than the object passed.
                 tPerm = tTemp;
         }
 

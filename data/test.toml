@@ -9,8 +9,13 @@ listen_port=25505
 
 # Where all the data is stored.
 data_dir = "data/"
+
+# TODO Implement TOMLWriter and use TOML format for user data file for both of these data
+user_data = "data/users"
+permission_data = "data/permissions"
+
 # Should we proxy a repository?
-proxy = false
+proxy = true
 # List the repositories to proxy.
 proxy_repo = "https://maven.gemwire.uk/"
 

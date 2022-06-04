@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author Curle
  */
-public class Team {
+public class Team implements Entity{
 
     // The name of this Team.
     private final String name;
@@ -88,6 +88,7 @@ public class Team {
      * @param perm The permission to override with.
      * @return The instance of this Team.
      */
+    @Override
     public Team addArtifactOverride(String groupID, String artifactID, PermissionLevel perm) {
         this.artifactPermissions.put(groupID + "/" + artifactID, perm);
         return this;
@@ -100,6 +101,7 @@ public class Team {
      * @param perm The permission to override with.
      * @return The instance of this Team.
      */
+    @Override
     public Team addGroupOverride(String groupID, PermissionLevel perm) {
         this.groupPermissions.put(groupID, perm);
         return this;
@@ -126,7 +128,7 @@ public class Team {
      */
     public PermissionLevel getPermissionFor(String group, String artifact) {
         boolean hasGroupOverride = groupPermissions.containsKey(group);
-        boolean hasArtifactOverride = artifactPermissions.containsKey(artifact);
+        boolean hasArtifactOverride = artifactPermissions.containsKey(group + "/" + artifact);
 
         // Team specific permissions always take priority.
         if (hasArtifactOverride) return artifactPermissions.get(group + "/" + artifact);
@@ -135,5 +137,10 @@ public class Team {
         // The only thing left to fall back on is the organization we belong to.
         // The org will handle falling back to NONE for us.
         return org.getPermissionFor(group, artifact);
+    }
+
+    @Override
+    public String toString() {
+        return getName() + ":{" + String.join(" , ", users.stream().map(User::getUsername).toList()) + "}";
     }
 }

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
+import uk.gemwire.waitress.web.ProxyChecker;
 import uk.gemwire.waitress.web.RepoCache;
 import uk.gemwire.waitress.web.Server;
 
@@ -30,8 +31,8 @@ import java.util.HashMap;
  * - ~~Password management~~
  * - ~~Repository reading~~
  * - Permission management
- * - Upload
- * - Download
+ * - ~~Upload~~ (without permission)
+ * - ~~Download~~ (without permission)
  * - Management Pages
  *
  * @author Curle
@@ -40,6 +41,7 @@ public class Waitress {
 
     // Anonymous logger instance for the tool.
     public static final Logger LOGGER = LoggerFactory.getLogger("Waitress");
+    public static ProxyChecker checker;
 
     /**
      * Requires one argument.
@@ -90,6 +92,8 @@ public class Waitress {
 
             LOGGER.info("Set up. Starting route management.");
             // Start the server with the loaded config.
+            checker = new ProxyChecker(() -> Waitress.LOGGER.warn("Proxy checker thread has interrupted!"));
+            checker.start();
             Server.start();
         } catch (Exception exc) {
             System.err.println(exc.getMessage());
