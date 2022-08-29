@@ -1,19 +1,24 @@
 package uk.gemwire.waitress;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
+import uk.gemwire.waitress.permissions.PermissionStore;
+import uk.gemwire.waitress.permissions.entity.User;
 import uk.gemwire.waitress.web.RepoCache;
 import uk.gemwire.waitress.web.Server;
 
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Entry point to the Waitress repository manager.
@@ -85,6 +90,8 @@ public class Waitress {
             Config.set(map);
             // Prepare password authentication maps.
             Auth.setupAuth();
+            // Read permissions from disk.
+            PermissionStore.setupPermissions();
             // Cache all known repositories.
             RepoCache.enumerate();
 
@@ -93,6 +100,24 @@ public class Waitress {
             Server.start();
         } catch (Exception exc) {
             System.err.println(exc.getMessage());
+        }
+
+        LOGGER.info("Shutting down. Saving passwords and permission caches.");
+
+        try {
+            Auth.writeMap();
+        } catch (IOException e) {
+            LOGGER.error("Unable to write passwords to disk. Error: " + e.getMessage());
+        }
+
+        try {
+            // Deserialize all users from disk, should they be there.
+            Gson gson = new Gson();
+            Writer permsWriter = new FileWriter(Config.DATA_DIR + "waitress/permissions.json");
+
+            gson.toJson(PermissionStore.getInstance(), permsWriter);
+        } catch (IOException e) {
+            LOGGER.error("Unable to write permissions to disk. Error: " + e.getMessage());
         }
 
         System.exit(0);

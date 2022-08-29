@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import uk.gemwire.waitress.Waitress;
 import uk.gemwire.waitress.config.Config;
+import uk.gemwire.waitress.permissions.Permission;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -107,6 +108,8 @@ public class Server {
         Javalin server = Javalin.create().start(Config.LISTEN_PORT);
 
         server.get("/*", Server::getMaven);
+
+        server.get("/perms/*", Permission::updatePerm);
 
         Waitress.LOGGER.info("Server started. Waiting for requests.");
 

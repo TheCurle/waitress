@@ -1,8 +1,14 @@
 package uk.gemwire.waitress.authentication;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import uk.gemwire.waitress.permissions.PermissionStore;
+import uk.gemwire.waitress.permissions.entity.User;
 import uk.gemwire.waitress.config.Config;
 
+import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +24,7 @@ import java.util.NoSuchElementException;
  */
 public final class Auth {
 
-    /**
-     * TODO: this should not use String usernames. This should be a map of User (or user ID) to password hash.
-     */
-    private static final Map<String, byte[]> users = new HashMap<>();
+    private static Map<User, byte[]> hashes = new HashMap<>();
 
     // True if the Config has been loaded and we're ready to rock.
     private static boolean ready = false;
@@ -30,13 +33,39 @@ public final class Auth {
      * Initialize the Auth system.
      * Adds the admin user with global permissions to the user map.
      * This user should always exist and should always be the first user.
+     *
+     * Reads the rest of users from disk.
      */
     public static void setupAuth() {
         ready = true;
         // the above means the CalledTooEarlyException can't be thrown. ignore the error
         try {
-            addUser(Config.ADMIN_USERNAME, Config.ADMIN_HASH.getBytes(StandardCharsets.UTF_8));
-        } catch (CalledTooEarlyException ignored) {}
+            // Deserialize all users from disk, should they be there.
+            Gson gson = new Gson();
+            Type passwordMap = new TypeToken<Map<User, byte[]>>(){}.getType();
+            Reader authReader = new FileReader(Config.DATA_DIR + "waitress/auth.json");
+
+            hashes = gson.fromJson(authReader, passwordMap);
+
+            // addUser does nothing if the user already exists, so there is no disadvantage to this.
+            addUser(PermissionStore.userByName(Config.ADMIN_USERNAME), Config.ADMIN_HASH.getBytes(StandardCharsets.UTF_8));
+
+        } catch (CalledTooEarlyException | FileNotFoundException ignored) {}
+    }
+
+    /**
+     * Write all saved passwords to DATA_DIR/waitress/auth.json
+     * TODO: this should be rather secure due to the salted hashed nature of the passwords,
+     *  but there should be an alternative solution.
+     */
+    public static void writeMap() throws IOException {
+        // Deserialize all users from disk, should they be there.
+        Gson gson = new Gson();
+        Type passwordMap = new TypeToken<Map<User, byte[]>>(){}.getType();
+        Writer authWriter = new FileWriter(Config.DATA_DIR + "waitress/auth.json");
+
+        gson.toJson(hashes, passwordMap, authWriter);
+
     }
 
     /**
@@ -45,17 +74,17 @@ public final class Auth {
      * If the user does not exist, it is added to the map and appended to the hash file.
      *
      * This function interacts with the user map, so it must be called after setupAuth.
-     * @param username The new user's login name.
+     * @param user The new user.
      * @param password The hash of the user's password.
      */
-    public static void addUser(String username, byte[] password) throws CalledTooEarlyException {
+    public static void addUser(User user, byte[] password) throws CalledTooEarlyException {
         if(!ready)
             throw new CalledTooEarlyException();
 
-        if (users.containsKey(username))
+        if (hashes.containsKey(user))
             return;
 
-        users.put(username, password);
+        hashes.put(user, password);
         //TOMLWriter.addPair(username, password);
     }
 
@@ -64,18 +93,18 @@ public final class Auth {
      * If the user does not exist, this throws {@link java.util.NoSuchElementException}.
      *
      * This function interacts with the user map, so it must be called after setupAuth.
-     * @param username The username of the user to check.
+     * @param user The user to check.
      * @param password The plaintext password to check.
      * @return true if the password matches, false if the password does not match.
      */
-    public static boolean checkPassword(String username, String password) throws CalledTooEarlyException, NoSuchElementException {
+    public static boolean checkPassword(User user, String password) throws CalledTooEarlyException, NoSuchElementException {
         if(!ready)
             throw new CalledTooEarlyException();
 
-        if (!users.containsKey(username))
-            throw new NoSuchElementException("User " + username + " does not exist.");
+        if (!hashes.containsKey(user))
+            throw new NoSuchElementException("User " + user.getUsername() + " does not exist.");
 
-        return BCrypt.verifyer().verify(password.getBytes(StandardCharsets.UTF_8), users.get(username)).verified;
+        return BCrypt.verifyer().verify(password.getBytes(StandardCharsets.UTF_8), hashes.get(user)).verified;
     }
 
     /**

@@ -47,7 +47,7 @@ public final class TOMLReader {
      * Categories are ignored. Duplicate keys return an error.
      */
     static class Parser {
-        private HashMap<String, String> internalMap = new HashMap<>();
+        private final HashMap<String, String> internalMap = new HashMap<>();
 
         /**
          * Iterate the token list, building up the internal map.

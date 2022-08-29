@@ -1,7 +1,8 @@
-package uk.gemwire.waitress.authentication.entity;
+package uk.gemwire.waitress.permissions.entity;
 
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.authentication.PermissionLevel;
+import uk.gemwire.waitress.config.Config;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -141,6 +142,10 @@ public class User {
      * @return The most relevant Permission Level of the User. This is the Permission that should be obeyed.
      */
     public PermissionLevel getPermissionFor(String group, String artifact) {
+        // The Administrator has ADMINISTRATE on every artifact by default.
+        if (username.equals(Config.ADMIN_USERNAME))
+            return PermissionLevel.ADMINISTRATE;
+
         boolean hasGroupOverride = groupPermissions.containsKey(group);
         boolean hasArtifactOverride = artifactPermissions.containsKey(artifact);
 

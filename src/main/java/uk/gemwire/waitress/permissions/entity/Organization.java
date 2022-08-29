@@ -1,4 +1,4 @@
-package uk.gemwire.waitress.authentication.entity;
+package uk.gemwire.waitress.permissions.entity;
 
 import uk.gemwire.waitress.authentication.PermissionLevel;
 
